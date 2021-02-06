@@ -1,0 +1,2 @@
+const WEATHER_END_POINT='data/2.5/weather';
+const API_KEY='43c29e49ec0f261a0283788e89e59587';
