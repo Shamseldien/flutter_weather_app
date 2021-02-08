@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart';
-import 'package:new_weather_app/model.dart';
+import 'package:new_weather_app/models/model.dart';
 import 'package:new_weather_app/modules/home/bloc/states.dart';
 import 'package:new_weather_app/shared/const.dart';
 import 'package:new_weather_app/shared/network/remote/helper.dart';
@@ -15,19 +15,28 @@ class HomeCubit extends Cubit<HomeStates> {
   Map data = {};
   var currentLocation = '';
 
-  getWeather({city})async {
+  Future<void>getWeather({city})async {
     emit(HomeStateLoading());
-    await DioHelper.getWeather(
-        path: WEATHER_END_POINT,
-        query: {'q': '$city', 'appid': API_KEY}).then((value)async {
-     data =  value.data as Map;
-      DataModel(data: data);
-     // print('before==>> $data');
-      emit(HomeStateSuccess());
-    }).catchError((error) {
-      print('error===>>>${error.toString()}');
-      emit(HomeStateError(error));
-    });
+      try {
+        await DioHelper.getWeather(
+            path: WEATHER_END_POINT,
+            query: {
+              'q': '$city',
+              'units':'metric',
+              'appid': API_KEY}).then((value)async {
+          data =  value.data as Map;
+          DataModel(data: data);
+          print('before==>> ${DataModel.getCountry()}');
+          emit(HomeStateGetWeather());
+        }).catchError((error) {
+          print('error===>>>${error.toString()}');
+          emit(HomeStateError(error));
+        });
+      } on Exception catch (e) {
+        print(e.toString());
+        emit(HomeStateError(e.toString()));
+      }
+
   }
   getCurrentLocation() async{
     emit(HomeStateGetLocation());
@@ -35,25 +44,34 @@ class HomeCubit extends Cubit<HomeStates> {
         .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
         .then((Position position) {
           _currentPosition = position;
-      _getAddressFromLatLng();
-          emit(HomeStateSuccess());
+      getAddressFromLatLng().then((value){
+        getWeather(city: value).then((value){
+          emit(HomeStateGetWeather());
+        });
+
+      });
+          emit(HomeStateSuccessLocation());
     }).catchError((e) {
      emit(HomeStateError(e));
       print(e);
     });
+
   }
-  _getAddressFromLatLng() async {
+  Future<String>getAddressFromLatLng() async {
     emit(HomeStateGetAddress());
+    var myPlace ;
     try {
       List<Placemark> p = await geolocator.placemarkFromCoordinates(
           _currentPosition.latitude, _currentPosition.longitude);
       Placemark place = p[0];
       currentLocation=place.locality;
+      myPlace = place.locality;
+      emit(HomeStateSuccessAddress());
       print(place.locality);
-      emit(HomeStateSuccess());
     } catch (e) {
       emit(HomeStateError(e));
       print(e);
     }
+    return myPlace;
   }
 }
