@@ -26,12 +26,7 @@ dependencies:
   dio: any
   flutter_bloc: any
   geolocator: ^5.3.1
-  flutter_native_splash: ^0.3.0
-flutter_native_splash:
-  color: "#ffffff"
-  image: images/logo.png
-  android: true
-  android_gravity: center
+
 
 
 
@@ -45,6 +40,12 @@ dev_dependencies:
     sdk: flutter
   integration_test:
     sdk: flutter
+  flutter_native_splash: ^1.2.4
+flutter_native_splash:
+    color: "#ffffff"
+    image: images/logo.png
+    android: true
+    android_gravity: center
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
